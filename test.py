@@ -29,3 +29,4 @@ print(num3 + 10)
 높이= int(input("높이 : "))
 넓이=너비*높이
 print(넓이)
+
