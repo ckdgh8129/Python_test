@@ -12,6 +12,10 @@
   "type": "commonjs",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "gtts": "^0.2.1",
+    "openai": "^6.34.0",
+    "play-sound": "^1.1.6",
+    "say": "^0.16.0"
   }
 }
