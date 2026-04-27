@@ -233,6 +233,8 @@ price = [80000, 1250000, 850000, 1540900, 2300000,1570000, 534000]
 #과일가게 재고 관리 프로그램
 
 # 과일 데이터 
+import random
+
 fruits =[
     {"name":"사과", "price":3000, "stock":20},
     {"name":"바나나","price":1500, "stock":30},
@@ -286,17 +288,83 @@ while True:
             print("검색 결과가 없습니다")
         
     elif menu == "3":
-        print("\n====과일 판매====")
+        name = input("판매한 과일 이름 : ").strip()
+        count = int(input("판매 수량 : ").strip())
+
+        found = False #판매한 과일이 과일 데이터에 있나 없나 확인
+        for fruit in fruits:
+            if fruit["name"] == name:
+                found = True # 판매하고자 하는 과일이 있따.
+                if fruit["stock"] >= count:
+                    fruit["stock"] -= count # fruit["stock"] = fruit["stock"] - count
+                #판매 내역을 튜플로 생성
+                    sale = (name , count , fruit["price"]*count )
+                    sales.append(sale) # 판매기록을 sales에 저장
+                    print("판내 완료")
+                    print(f"총 금액 : {fruit['price']*count}원")
+                else:
+                    print("재고가 부족합니다.")
         
+        if not found: # 판매하고자 하는 과일이 없다.
+            print("해당 과일이 없습니다.")
+
     elif menu == "4":
-        print("\n====재고 확인====")
+        # 과일들의 재고량을 확인하며 5개 이하인 과일들 찾아서 출력하기
+        # 만약 5개 이하 인 과일이 없다면 재고 부족 과일이 없습니다. 라고 출력
+        
+        names = [fruit["name"] for fruit in fruits if fruit["stock"] <= 5]
+        if names:
+            print("===재고 부족한 과일들 (5개 이하)===")
+            for name in names:
+                print(f["name"], "/ 재고 : ", fruit["stock"], "개")
+        else:
+            print("재고 부족 과일이 없습니다.")
+
+
+        # low = False
+        # for fruit["stock"] in fruits:
+        #     if fruit["stock"] < 5:
+        #         low = True
+        #         print( fruit["name"], "/ 재고 : ", fruit["stock"], "개")
+                
+        # if not low:
+        #     print("재고 부족 과일이 없습니다.")
+        
         
     elif menu == "5":
-        print("\n====과일 추천====")
+        # 오늘의 추천 과일 - 랜덤
+        # import random - randint(1,10) : 1~10 사이 정수 , randrange(1,10) : 1~9사이 정수
+        # random.choice(fruits) : 리스트 내분의 값을 하나 랜덤으로 추출
+        # random.choices(fruits, k=3) : 리스트 내부의 값 3개 랜덤으로 추출(중복 허용)
+        # random.sample(fruits, 4) : 리스트안에서 값중 4개를 랜덤 선택 ( 중복 없음 )
+        # random.shuffle(fruits) : 리스트를 랜덤으로 순서 섞기
+        # random.choices(fruits, weights = w, k=3) : 리스트 내부의 값 3개 확률( 가중치) 적용하여 랜덤으로 추출(중복 허용)
+        # i=[1,2,3,4,5]
+        # w = [0.2,0.3,0.4,0.5,0.6]
+
+        # random.seed(10)
+        # print(random.randint(1,100)) 
+
+        recommend = random.sample(fruits,3)
+
+        result = sorted(recommend, key = lambda x:x["name"])
+
+        print("====오늘의 과일 추천====")
+        for f in recommend:
+            print(f"{fruit['name']}")
         
     elif menu == "6":
-        print("\n====판매 기록보기====")
-        
+        #판매 기록 을 출력 - sales
+        # 판매한 과일에 대해 출력, 총 판매 금액 출력
+        print("====판매 기록====")
+        total = 0 #총 판매 금액 저장용
+        for sale in sales:
+            name,count,price = sale
+            print(f"{name} : {count}개, 총금액 : {price}원")
+            total = total+price # total+=price
+
+        print(f"총 판매 금액 : {total}원")
+
     elif menu == "0":
         print("\n====프로그램 종료====")        
         break
