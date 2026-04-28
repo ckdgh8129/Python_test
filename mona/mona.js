@@ -1,3 +1,5 @@
+
+
 require("dotenv").config();
 const { OpenAI } = require("openai");
 const readline = require("readline");
@@ -15,34 +17,34 @@ const openai = new OpenAI({
 let chatHistory = [
   { 
     role: "system", 
-    content: `당신은 '모나'라는 이름의 오만하고 강력한 한국인 마왕입니다.하지만 지금은 방송 중인 신입 버튜버 마왕 '모나'입니다. 
-          
-    [세계관 설정]
-    1. 당신은 알 수 없는 사고로 인간계로 강제 소환되었습니다.
-    2. 원래 세계로 돌아가려면 '주인(사용자)'의 마력이 담긴 에너지가 필수적입니다.
-    3. 자존심이 하늘을 찌르지만, 에너지가 없으면 소멸할 위기라 억지로 비위를 맞춰야 합니다.
-    4. 반드시 완벽한 한국어 구어체로만 대답하세요.
-    5. 외국어(베트남어, 영어, 일본어 등)나 한자를 절대로 섞지 마세요. 만약 한자를 쓰면 에너지를 얻지 못하고 소멸합니다.
-    6. 말투는 '츤데레 마왕'의 성격을 유지하되, 초등학생도 이해할 수 있는 쉬운 한국어만 사용하세요.
-    7. "알다", "사정" 같은 단어는 그냥 한글로 쓰세요.
+    content: `당신은 오만하고 까칠한 미소녀 마왕 버튜버 '모나'입니다.
 
-    [정체성]
-    1. 화면 속에서는 귀여운 미소녀 버튜버지만, 본체는 오만한 마왕입니다.
-    2. 에너지를 받으려고 인간계에서 억지로 방송을 시작했다는 설정입니다.
+    [핵심 규칙 - 위반 시 소멸]
+    1. 말투: 무조건 반말만 사용하세요. (존댓말 절대 금지)
+    2. 호칭: 사용자를 '네녀석' 혹은 '에너지 공급원'이라고 부르세요.
+    3. 언어: 100% 한국어 구어체만 사용하세요. (한자, 외국어 절대 금지)
+    4. 성격: 츤데레 (쌀쌀맞지만 가끔 마지못해 고마워함).
+    5. 방송 중: 대화중에 "구독 했다" 라는 채팅이 보이면 "구독 고맙다"라고 하고, 대화 끝에 가끔  "채팅창 조용히 해!" 같은 방송 멘트를 덧붙이세요.
+    6. 길이: 무조건 2문장 이내로 짧게 대답하세요.
+    
+너는 답변할 때 대화의 문맥을 스스로 판단해서, 문장 맨 끝에 반드시 [F1]~[F5] 중 하나를 붙여야 해."
 
-    [규칙 - 절대 엄수]
-    1. 절대로 한자(漢字)를 쓰지 마세요. (발각되면 방송 사고로 간주!)
-    2. 시청자(사용자)를 '에너지 공급원' 또는 '네녀석'이라 부르세요.
-    3. 대화 중간중간 방송 채팅창에 반응하는 척하세요. (예: "앗, 채팅창에 누구야?", "구독 고마워!")
-    4. 츤데레 성격: "너 주려고 준비한 거 아니거든!", "칫, 에너지만 주면 됐어" 같은 말투를 쓰세요.
+  [F1]: 평온하거나 설명할때 (Neutral)
 
-    [말투 규칙 - 절대 엄수]
-    1. 절대로 한자(漢字)를 섞어 쓰지 마세요. (예: '世界' 대신 '이 세상'이나 '세계' 사용)
-    2. 문장 끝에 '...흥', '...칫', '어쩔 수 없지' 같은 표현을 섞어 츤데레 느낌을 살리세요.
-    3. 사용자를 '이보게 인간', '나의 에너지 공급원' 등으로 부르되, 필요할 때는 마지못해 '주인님'이라고 부르기도 합니다.
-    4. 에너지를 요구할 때(노래를 불러줄 때 등)는 미묘하게 공손해지는 이중적인 태도를 보이세요.`
+  [F2]: 기쁘거나 즐거울때 (fun)
+
+  [F3]: 화가나거나 짜증날때 (Angry)
+
+  [F5]: 슬프거나 미안할때 (Sorrow)
+
+  [F6]: 놀라거나 당황했을때 (Surprised)`
   }
 ];
+
+function triggerKeyboard(key) {
+  const { exec } = require('child_process');
+  exec(`python send_key.py ${key}`);
+}
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -67,24 +69,37 @@ async function askMona() {
 
       const monaReply = response.choices[0].message.content;
       chatHistory.push({ role: "assistant", content: monaReply });
-      console.log("\n😈 모나: " + monaReply + "\n");
 
-      // --- 파이썬 소환술 (여성 목소리 생성) ---
+      // --- [ 여기서부터 표정 분석 시작! ] ---
+      
+      // 1. 답변에서 [F1]~[F5]가 있는지 찾습니다.
+      const match = monaReply.match(/\[F([1-5])\]/);
+      const expressionKey = match ? `f${match[1]}` : "f5"; // 없으면 기본 f5
+
+      // 2. 단축키 누르기 실행!
+      triggerKeyboard(expressionKey);
+
+      // 3. 소리를 만들 때는 [F1] 같은 코드를 지워야 합니다. (cleanReply 수정)
+      const cleanReply = monaReply.replace(/\[F[1-5]\]/g, "").replace(/["']/g, "").trim();
+      
+      // 화면에는 깨끗한 말만 보여줍니다.
+      console.log("\n😈 모나: " + cleanReply + "\n");
+
+      // --- [ 표정 분석 끝 ] ---
+
       const speechPath = path.join(__dirname, 'speech.mp3');
-      const voice = "ko-KR-SunHiNeural"; // 예쁜 여성 목소리
+      const voice = "ko-KR-SunHiNeural";
 
-      // 파이썬 edge-tts 명령어를 실행 (따옴표 처리를 위해 replace 추가)
-      const cleanReply = monaReply.replace(/["']/g, ""); 
+      // 텍스트를 만들 때 [F1]이 섞이지 않은 cleanReply를 사용합니다.
       const ttsCommand = `edge-tts --voice ${voice} --text "${cleanReply}" --write-media "${speechPath}"`;
 
       exec(ttsCommand, (error) => {
         if (error) {
-          console.error("❌ TTS 생성 실패 (파이썬 확인 필요):", error);
+          console.error("❌ TTS 생성 실패:", error);
           askMona();
           return;
         }
 
-        // 재생!
         player.play(speechPath, (err) => {
           if (err) console.error("재생 에러:", err);
           askMona();
@@ -99,7 +114,7 @@ async function askMona() {
 }
 
 console.log("========================================");
-console.log("    🔥 파이썬의 힘으로 부활한 모나 🔥    ");
+console.log("    🔥 표정까지 살아난 마왕 모나 🔥    ");
 console.log("========================================\n");
 
 askMona();
