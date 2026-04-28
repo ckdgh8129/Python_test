@@ -1,11 +1,10 @@
 
-
 require("dotenv").config();
 const { OpenAI } = require("openai");
 const readline = require("readline");
 const player = require("play-sound")();
 const path = require("path");
-const { exec } = require("child_process"); // 파이썬 실행을 위한 도구
+const { exec } = require("child_process");
 
 const myKey = process.env.GROK_API_KEY || process.env.GROQ_API_KEY || "여기에_직접_키를_넣으세요";
 
@@ -41,80 +40,102 @@ let chatHistory = [
   }
 ];
 
-function triggerKeyboard(key) {
-  const { exec } = require('child_process');
-  exec(`python send_key.py ${key}`);
-}
+// 마지막 활동 시간 저장
+let lastActivityTime = Date.now();
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-async function askMona() {
-  rl.question("💬 당신: ", async (userInput) => {
-    if (userInput.toLowerCase() === "exit") {
-      console.log("\n😈 모나: 흥, 잘 가라고!");
-      rl.close();
-      return;
-    }
-
-    chatHistory.push({ role: "user", content: userInput });
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: chatHistory,
-      });
-
-      const monaReply = response.choices[0].message.content;
-      chatHistory.push({ role: "assistant", content: monaReply });
-
-      // --- [ 여기서부터 표정 분석 시작! ] ---
-      
-      // 1. 답변에서 [F1]~[F5]가 있는지 찾습니다.
-      const match = monaReply.match(/\[F([1-5])\]/);
-      const expressionKey = match ? `f${match[1]}` : "f5"; // 없으면 기본 f5
-
-      // 2. 단축키 누르기 실행!
-      triggerKeyboard(expressionKey);
-
-      // 3. 소리를 만들 때는 [F1] 같은 코드를 지워야 합니다. (cleanReply 수정)
-      const cleanReply = monaReply.replace(/\[F[1-5]\]/g, "").replace(/["']/g, "").trim();
-      
-      // 화면에는 깨끗한 말만 보여줍니다.
-      console.log("\n😈 모나: " + cleanReply + "\n");
-
-      // --- [ 표정 분석 끝 ] ---
-
-      const speechPath = path.join(__dirname, 'speech.mp3');
-      const voice = "ko-KR-SunHiNeural";
-
-      // 텍스트를 만들 때 [F1]이 섞이지 않은 cleanReply를 사용합니다.
-      const ttsCommand = `edge-tts --voice ${voice} --text "${cleanReply}" --write-media "${speechPath}"`;
-
-      exec(ttsCommand, (error) => {
-        if (error) {
-          console.error("❌ TTS 생성 실패:", error);
-          askMona();
-          return;
-        }
-
-        player.play(speechPath, (err) => {
-          if (err) console.error("재생 에러:", err);
-          askMona();
-        });
-      });
-
-    } catch (error) {
-      console.error("\n❌ 소환 실패:", error.message);
-      askMona();
-    }
-  });
+// 키보드 트리거
+function triggerKeyboard(key) {
+  exec(`python send_key.py ${key}`);
 }
 
+// --- [핵심] 대화 및 혼잣말 처리 통합 함수 ---
+async function askMona(isSelfTalk = false, customInput = null) {
+  // 사용자가 입력 중일 때는 타이머가 돌아가면 안 되므로 활동 시간 갱신
+  if (!isSelfTalk) lastActivityTime = Date.now();
+
+  // 혼잣말 모드일 때는 정해진 프롬프트를 사용
+  let userInput = customInput;
+  
+  if (!isSelfTalk) {
+    // 유저 입력을 기다리는 일반 모드
+    userInput = await new Promise((resolve) => {
+      rl.question("💬 당신: ", (input) => resolve(input));
+    });
+  }
+
+  if (userInput && userInput.toLowerCase() === "exit") {
+    console.log("\n😈 모나: 흥, 잘 가라고!");
+    process.exit();
+  }
+
+  // 활동 시간 업데이트 (AI가 대답 시작할 때)
+  lastActivityTime = Date.now();
+
+  if (!isSelfTalk) {
+    chatHistory.push({ role: "user", content: userInput });
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: isSelfTalk ? [...chatHistory, { role: "user", content: userInput }] : chatHistory,
+    });
+
+    const monaReply = response.choices[0].message.content;
+    if (!isSelfTalk) chatHistory.push({ role: "assistant", content: monaReply });
+
+    // 표정 분석
+    const match = monaReply.match(/\[F([1-6])\]/);
+    const expressionKey = match ? `f${match[1]}` : "f1";
+    triggerKeyboard(expressionKey);
+
+    // 텍스트 정리 및 출력
+    const cleanReply = monaReply.replace(/\[F[1-6]\]/g, "").replace(/["']/g, "").trim();
+    console.log(`\n😈 모나${isSelfTalk ? '(혼잣말)' : ''}: ${cleanReply}\n`);
+
+    // TTS 및 재생
+    const speechPath = path.join(__dirname, 'speech.mp3');
+    const ttsCommand = `edge-tts --voice "ko-KR-SunHiNeural" --text "${cleanReply}" --write-media "${speechPath}"`;
+
+    exec(ttsCommand, (error) => {
+      if (error) {
+        console.error("❌ TTS 생성 실패");
+        if (!isSelfTalk) askMona();
+        return;
+      }
+      player.play(speechPath, (err) => {
+        if (!isSelfTalk) askMona(); // 재생 끝나면 다시 질문 대기
+      });
+    });
+
+  } catch (error) {
+    console.error("\n❌ 소환 실패:", error.message);
+    if (!isSelfTalk) askMona();
+  }
+}
+
+// --- [감시자] 30초 동안 조용하면 혼잣말 시키기 ---
+function startMonitoring() {
+  setInterval(() => {
+    const now = Date.now();
+    // 30초 동안 활동이 없고, 현재 대화 중이 아닐 때만 발동
+    if (now - lastActivityTime > 30000) {
+      lastActivityTime = now; // 중복 발화 방지용 초기화
+      console.log("\n(조용하자 모나가 입을 엽니다...)");
+      askMona(true, "너는 지금 방송 중인 마왕 모나야. 시청자가 없어서 심심해하는 혼잣말을 짧게 한 줄만 해줘. 끝에 반드시 [F1]~[F6] 중 하나를 붙여.");
+    }
+  }, 10000); // 10초마다 체크
+}
+
+// 시스템 시작
 console.log("========================================");
-console.log("    🔥 표정까지 살아난 마왕 모나 🔥    ");
+console.log("    🔥 자아를 가진 마왕 모나 시스템 🔥    ");
 console.log("========================================\n");
 
+startMonitoring();
 askMona();
