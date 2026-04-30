@@ -9,22 +9,22 @@
         "frames": 9000
     },
     "frames": {
-        "number": 127,
-        "image": "22775053/18396710_frame_127.png",
+        "number": 12,
+        "image": "22775053/18396595_frame_12.png",
         "annotations": [
             {
                 "label": {
-                    "x": 639,
-                    "y": 897,
-                    "width": 293,
-                    "height": 188
+                    "x": 629,
+                    "y": 899,
+                    "width": 303,
+                    "height": 187
                 },
                 "category": {
                     "code": "vehicle",
                     "attributes": [
                         {
                             "code": "vehicle_define",
-                            "value": "car" 
+                            "value": "car"
                         },
                         {
                             "code": "vehicle_status",
@@ -58,7 +58,7 @@
                 "label": {
                     "x": 805,
                     "y": 583,
-                    "width": 136,
+                    "width": 145,
                     "height": 124
                 },
                 "category": {
@@ -161,31 +161,31 @@
             },
             {
                 "label": {
-                    "x": 989,
-                    "y": 594,
-                    "width": 277,
-                    "height": 447
+                    "x": 937,
+                    "y": 616,
+                    "width": 54,
+                    "height": 130
                 },
                 "category": {
-                    "code": "vehicle",
+                    "code": "person",
                     "attributes": [
                         {
-                            "code": "vehicle_define",
-                            "value": "truck"
+                            "code": "person_define",
+                            "value": "normal"
                         },
                         {
-                            "code": "vehicle_status",
-                            "value": "normal"
+                            "code": "person_status",
+                            "value": "person_status_normal"
                         }
                     ]
                 }
             },
             {
                 "label": {
-                    "x": 1115,
-                    "y": 450,
+                    "x": 1113,
+                    "y": 451,
                     "width": 23,
-                    "height": 27
+                    "height": 31
                 },
                 "category": {
                     "code": "vehicle",
